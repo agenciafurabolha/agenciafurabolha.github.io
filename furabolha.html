@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>furabolha - Marketing Digital & Design</title>
+    <meta name="description" content="A furabolha é uma agência de marketing e design que impulsiona sua marca para fora da bolha com gestão de redes sociais, desenvolvimento de sites e identidade visual.">
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos personalizados para complementar o Tailwind */
+        html {
+           scroll-behavior: smooth; /* Garante o scroll suave como fallback */
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #0a0a2a; /* Um fundo escuro para destacar as cores */
+            color: #f0f0f0;
+            position: relative; /* Necessário para posicionar o canvas de fundo */
+        }
+
+        /* Gradiente principal inspirado no logo */
+        .gradient-text {
+            background: linear-gradient(90deg, #0052D4, #6FB1FC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        
+        /* Classe específica para o nome "furabolha" */
+        .furabolha-gradient {
+            font-weight: 700; /* Negrito */
+            background: linear-gradient(90deg, #0052D4, #6FB1FC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0052D4, #4364F7, #6FB1FC);
+        }
+
+        /* Animação de "estouro" ajustada para terminar no tamanho normal */
+        @keyframes burst {
+            0% { transform: scale(1.0); }
+            25% { transform: scale(1.15); }
+            50% { transform: scale(0.95); }
+            75% { transform: scale(1.05); }
+            100% { transform: scale(1.0); }
+        }
+
+        /* Estilo para as "bolhas" de serviço */
+        .service-bubble {
+            border-radius: 50%; /* Círculo perfeito */
+            position: relative; /* Necessário para os pseudo-elementos */
+            overflow: hidden; /* Garante que o reflexo não saia da bolha ANTES de estourar */
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+        }
+
+        /* Camada visual da bolha (fundo, borda, desfoque) */
+        .service-bubble::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 0;
+
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: opacity 0.3s ease-out, border-color 0.5s ease;
+        }
+
+        /* Garante que o conteúdo textual e ícone fiquem na frente da bolha */
+        .service-bubble > div {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Pseudo-elemento para simular o reflexo (shader) */
+        .service-bubble::after {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1) 30%, transparent 60%);
+            transform: rotate(25deg);
+            pointer-events: none; /* Garante que não interfere com o clique */
+            transition: transform 0.5s ease, opacity 0.3s ease;
+            z-index: 2; /* Fica sobre o conteúdo mas não bloqueia o clique */
+        }
+
+
+        /* Efeito hover sutil para indicar interatividade */
+        .service-bubble:not(.popped):hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+        
+        .service-bubble:not(.popped):hover::before {
+            border-color: rgba(111, 177, 252, 0.5);
+        }
+        
+        .service-bubble:not(.popped):hover::after {
+            transform: rotate(35deg) scale(1.1);
+        }
+
+        /* Estilo da bolha após ser "estourada" */
+        .service-bubble.popped {
+            cursor: default;
+            overflow: visible;
+            justify-content: flex-start; /* Alinha o conteúdo ao topo após estourar */
+            padding-top: 5rem; /* COMPENSA a mudança de justify-center para justify-start, mantendo o conteúdo no lugar */
+            height: auto; /* Permite que a altura do container cresça com o conteúdo */
+        }
+
+        /* Animação de estouro aplicada ao conteúdo interno, não ao container */
+        .service-bubble.popped > div {
+            animation: burst 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* CORREÇÃO DEFINITIVA: Faz a camada visual (borda/fundo) e o reflexo desaparecerem INSTANTANEAMENTE para evitar artefatos de renderização. */
+        .service-bubble.popped::before,
+        .service-bubble.popped::after {
+            opacity: 0;
+            transition-duration: 0s; /* Garante que a transição seja instantânea */
+        }
+
+
+        /* Esconde a descrição por padrão */
+        .service-description {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.5s ease-in-out 0.2s, max-height 0.5s ease-in-out 0.2s, margin-top 0.5s ease-in-out 0.2s;
+        }
+
+        /* Mostra a descrição quando a bolha é "estourada" */
+        .service-bubble.popped .service-description {
+            opacity: 1;
+            max-height: 200px; /* Altura suficiente para o texto */
+            margin-top: 1rem;
+        }
+
+
+        /* Animação para os elementos que aparecem com o scroll */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Canvas para o fundo animado em toda a página */
+        #background-canvas {
+            position: fixed; /* Mudei para fixed para ficar sempre visível */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh; /* Ocupa a altura da tela */
+            z-index: -1; /* Fica atrás de tudo */
+            opacity: 0.5;
+        }
+
+        /* Estilo do Menu Mobile */
+        .mobile-menu {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(100%);
+        }
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <canvas id="background-canvas"></canvas>
+
+    <div class="relative z-10">
+        <!-- Cabeçalho Fixo -->
+        <header class="fixed top-0 left-0 right-0 p-2 md:p-3 lg:px-8 z-30 bg-gray-900/80 backdrop-blur-md">
+            <div class="container mx-auto flex justify-center md:justify-between items-center relative">
+                <div class="flex items-center">
+                    <!-- O 'src' foi atualizado. Certifique-se de que o arquivo 'logosite.png' está na mesma pasta que este arquivo HTML. -->
+                    <img src="logosite.png" alt="Logo furabolha" class="h-32 md:h-40 mr-3">
+                </div>
+                
+                <!-- Navegação Desktop -->
+                <nav class="hidden md:flex items-center space-x-6 lg:space-x-8">
+                    <a href="#services" class="text-white hover:text-cyan-300 transition-colors duration-300">Serviços</a>
+                    <a href="#about" class="text-white hover:text-cyan-300 transition-colors duration-300">Sobre Nós</a>
+                    <a href="#contact" class="text-white hover:text-cyan-300 transition-colors duration-300">Contato</a>
+                </nav>
+
+                <a href="#contact" class="hidden md:block bg-white text-blue-700 font-bold py-2 px-6 rounded-full hover:bg-cyan-300 transform hover:scale-105 transition-all duration-300">
+                    Vamos Conversar
+                </a>
+                
+                <!-- Botão do Menu Mobile -->
+                <div class="md:hidden absolute top-1/2 right-4 -translate-y-1/2">
+                    <button id="menu-button" class="text-white focus:outline-none">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Menu Mobile -->
+        <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 h-full w-64 bg-gray-900/90 backdrop-blur-md p-6 z-50 md:hidden">
+            <div class="flex justify-end mb-8">
+                 <button id="close-menu-button" class="text-white focus:outline-none">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <nav class="flex flex-col space-y-6 text-center">
+                <a href="#services" class="text-white text-lg hover:text-cyan-300">Serviços</a>
+                <a href="#about" class="text-white text-lg hover:text-cyan-300">Sobre Nós</a>
+                <a href="#contact" class="text-white text-lg hover:text-cyan-300">Contato</a>
+                <a href="#contact" class="mt-4 bg-white text-blue-700 font-bold py-2 px-6 rounded-full hover:bg-cyan-300">
+                    Vamos Conversar
+                </a>
+            </nav>
+        </div>
+
+        <!-- Seção Hero -->
+        <main class="container mx-auto px-4 pt-40 md:pt-48 pb-20 text-center flex flex-col items-center justify-center min-h-screen">
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase tracking-tighter reveal">
+                Sua marca <br><span class="gradient-text">fora da bolha</span>.
+            </h1>
+            <p class="mt-6 max-w-2xl text-lg md:text-xl text-gray-300 reveal" style="transition-delay: 200ms;">
+                Somos a <strong class="furabolha-gradient">furabolha</strong>, a agência que rompe as barreiras do comum para impulsionar o seu negócio com estratégias de marketing e design que realmente conectam.
+            </p>
+            <div class="mt-10 reveal" style="transition-delay: 400ms;">
+                <a href="#services" class="gradient-bg text-white font-bold py-4 px-10 rounded-full text-lg hover:shadow-2xl hover:shadow-cyan-500/50 transform hover:scale-105 transition-all duration-300">
+                    Descubra como
+                </a>
+            </div>
+        </main>
+
+        <!-- Seção de Serviços -->
+        <section id="services" class="py-16 md:py-20 bg-[#0a0a2a] bg-opacity-90 scroll-mt-40 md:scroll-mt-48">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 reveal">Nossas Soluções Criativas</h2>
+                <p class="max-w-3xl mx-auto text-gray-400 mb-16 reveal" style="transition-delay: 150ms;">Criamos experiências digitais completas para sua marca se destacar. Clique para estourar as bolhas e saber mais.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16 items-start">
+                    
+                    <!-- Bolha 1: Gestão de Redes Sociais -->
+                    <div class="reveal min-h-[360px] flex flex-col items-center">
+                        <div class="service-bubble w-64 h-64 p-6 flex flex-col items-center justify-center mx-auto">
+                            <div class="text-center">
+                                <div class="gradient-bg p-3 rounded-full mb-4 inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                                </div>
+                                <h3 class="text-xl font-bold whitespace-nowrap">Redes Sociais</h3>
+                                <p class="text-gray-300 service-description">Construímos e gerenciamos comunidades online, criando conteúdo que engaja e converte seguidores em clientes fiéis.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bolha 2: Desenvolvimento de Sites -->
+                    <div class="reveal min-h-[360px] flex flex-col items-center" style="transition-delay: 200ms;">
+                        <div class="service-bubble w-64 h-64 p-6 flex flex-col items-center justify-center mx-auto">
+                            <div class="text-center">
+                                <div class="gradient-bg p-3 rounded-full mb-4 inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                                </div>
+                                <h3 class="text-xl font-bold whitespace-nowrap">Desenvolvimento Web</h3>
+                                <p class="text-gray-300 service-description">Criamos sites e landing pages de alta performance, com design responsivo, focados na experiência do usuário e otimizados para SEO.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bolha 3: Identidade Visual -->
+                    <div class="reveal min-h-[360px] flex flex-col items-center" style="transition-delay: 400ms;">
+                        <div class="service-bubble w-64 h-64 p-6 flex flex-col items-center justify-center mx-auto">
+                            <div class="text-center">
+                                <div class="gradient-bg p-3 rounded-full mb-4 inline-block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                                </div>
+                                <h3 class="text-xl font-bold whitespace-nowrap">Identidade Visual</h3>
+                                <p class="text-gray-300 service-description">Desenvolvemos a alma da sua marca. Do logotipo à paleta de cores, criamos uma identidade visual única que se conecta com seu público.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Sobre Nós -->
+        <section id="about" class="py-16 md:py-20 bg-[#0a0a2a] bg-opacity-90 scroll-mt-40 md:scroll-mt-48">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                    <div class="lg:w-1/2 reveal">
+                        <h2 class="text-3xl md:text-4xl font-bold mb-4">Somos mais que uma agência.</h2>
+                        <p class="text-gray-300 text-lg mb-6">Acreditamos que cada marca tem uma história única para contar. Nossa missão é encontrar essa essência e traduzi-la em estratégias digitais que não apenas alcançam, mas também ressoam com as pessoas certas.</p>
+                        <p class="text-gray-300 text-lg">Somos um time de criativos, estrategistas e desenvolvedores apaixonados por furar a bolha do marketing tradicional e entregar resultados que fazem a diferença.</p>
+                    </div>
+                    <div class="lg:w-1/2 reveal space-y-8" style="transition-delay: 200ms;">
+                        <!-- Item 1: Inovação -->
+                        <div class="flex items-start">
+                            <div class="gradient-bg p-4 rounded-full mr-6 shrink-0">
+                                <img src="ino.png" alt="Ícone de Inovação" class="w-7 h-7">
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold">Inovação</h3>
+                                <p class="text-gray-400 mt-1">Buscamos soluções à frente do tempo para destacar sua marca, utilizando as últimas tendências e tecnologias.</p>
+                            </div>
+                        </div>
+                        <!-- Item 2: Criatividade -->
+                        <div class="flex items-start">
+                            <div class="gradient-bg p-4 rounded-full mr-6 shrink-0">
+                               <img src="cri.png" alt="Ícone de Criatividade" class="w-7 h-7">
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold">Criatividade</h3>
+                                <p class="text-gray-400 mt-1">É a alma do nosso trabalho. Transformamos ideias em designs, conteúdos e campanhas que são visualmente impactantes e memoráveis.</p>
+                            </div>
+                        </div>
+                        <!-- Item 3: Estratégia -->
+                        <div class="flex items-start">
+                            <div class="gradient-bg p-4 rounded-full mr-6 shrink-0">
+                                <img src="est.png" alt="Ícone de Estratégia" class="w-7 h-7">
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold">Estratégia</h3>
+                                <p class="text-gray-400 mt-1">Nenhuma ação é por acaso. Planejamos cada passo com base em dados para garantir que seus objetivos sejam alcançados.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Seção de Contato -->
+        <section id="contact" class="py-16 md:py-20 bg-[#0a0a2a] bg-opacity-90 scroll-mt-40 md:scroll-mt-48">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 reveal">Pronto para furar sua bolha?</h2>
+                <p class="max-w-2xl mx-auto text-gray-400 mb-12 reveal" style="transition-delay: 150ms;">Vamos tomar um café e conversar sobre como podemos impulsionar seu negócio. Escolha sua forma de contato preferida abaixo.</p>
+
+                <div class="flex flex-col md:flex-row justify-center items-center gap-6 reveal w-full max-w-lg mx-auto" style="transition-delay: 300ms;">
+                    <!-- Botão WhatsApp -->
+                    <a href="https://wa.me/5573998207245" target="_blank" class="gradient-bg text-white font-bold py-4 px-8 rounded-full text-lg hover:shadow-2xl hover:shadow-cyan-500/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-3 w-full md:w-auto justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        <span>WhatsApp</span>
+                    </a>
+                    
+                    <!-- Botão E-mail -->
+                    <a href="mailto:contato@agenciafurabolha.com.br" class="bg-gray-800 border border-gray-700 text-white font-bold py-4 px-8 rounded-full text-lg hover:bg-gray-700 hover:border-cyan-400 transform hover:scale-105 transition-all duration-300 flex items-center gap-3 w-full md:w-auto justify-center">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                       <span>E-mail</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Rodapé -->
+        <footer class="bg-gray-900 py-10">
+            <div class="container mx-auto px-4 text-center text-gray-400">
+                <p>&copy; 2025 <strong class="furabolha-gradient">furabolha</strong>. Todos os direitos reservados.</p>
+                <p class="mt-2">Feito para furar bolhas e criar conexões.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- IMPORTANTE: Elemento de áudio para o som de estouro da bolha -->
+    <!-- Substitua o 'src' abaixo pelo caminho para o seu arquivo de som (ex: /sounds/pop.mp3) -->
+    <audio id="pop-sound-effect" src="pop.m4a" preload="auto"></audio>
+
+
+    <script>
+        // Script para animação de bolhas no canvas de fundo
+        const canvas = document.getElementById('background-canvas');
+        const ctx = canvas.getContext('2d');
+        let particlesArray;
+
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight; // Usa a altura da tela
+        }
+
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                if (this.x + this.size > canvas.width || this.x - this.size < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y + this.size > canvas.height || this.y - this.size < 0) {
+                    this.directionY = -this.directionY;
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function init() {
+            setCanvasSize();
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles / 4; i++) { // Reduzido para menos poluição visual
+                let size = (Math.random() * 50) + 20;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((canvas.height - size * 2) - (size * 2)) + size * 2); // Usa a altura do canvas
+                let directionX = (Math.random() * .4) - .2;
+                let directionY = (Math.random() * .4) - .2;
+                let color = 'rgba(0, 82, 212, 0.4)';
+
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0,0,innerWidth, canvas.height); // Limpa a altura total do canvas
+
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+        }
+        
+        // Chamar as funções
+        init();
+        animate();
+        
+        // Recalcular no redimensionamento da janela
+        window.addEventListener('resize', () => {
+            init();
+        });
+
+
+        // Script para animação de "revelar" ao rolar a página
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        revealElements.forEach(el => {
+            revealObserver.observe(el);
+        });
+
+        // Script para o Menu Mobile
+        const menuButton = document.getElementById('menu-button');
+        const closeMenuButton = document.getElementById('close-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuLinks = mobileMenu.querySelectorAll('a');
+
+        function toggleMenu() {
+            mobileMenu.classList.toggle('open');
+        }
+
+        menuButton.addEventListener('click', toggleMenu);
+        closeMenuButton.addEventListener('click', toggleMenu);
+
+        // Fecha o menu quando um link é clicado
+        menuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (mobileMenu.classList.contains('open')) {
+                    toggleMenu();
+                }
+            });
+        });
+
+        // Script para as bolhas de serviço interativas
+        const serviceBubbles = document.querySelectorAll('.service-bubble');
+        const popAudio = document.getElementById('pop-sound-effect');
+
+        serviceBubbles.forEach(bubble => {
+            bubble.addEventListener('click', () => {
+                // Se a bolha já foi estourada, não faz nada
+                if (bubble.classList.contains('popped')) {
+                    return;
+                }
+                
+                // Toca o som de "pop" personalizado
+                if (popAudio) {
+                    popAudio.currentTime = 0; // Reinicia o áudio para tocar novamente
+                    popAudio.play();
+                }
+
+                // Adiciona a classe "popped" para ativar as animações e mostrar o texto
+                bubble.classList.add('popped');
+            });
+        });
+
+        // Script para scroll suave
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
+
